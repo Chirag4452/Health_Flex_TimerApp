@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import ProgressBar from './ProgressBar';
 import CompletionModal from './CompletionModal';
 import { add_timer_to_history } from '../utils/history';
+import { use_theme } from '../contexts/ThemeContext';
 
 /**
  * Timer component - displays a countdown timer with start/pause/reset functionality
@@ -16,6 +17,9 @@ import { add_timer_to_history } from '../utils/history';
  * @param {Object} ref - React ref for external control
  */
 const Timer = forwardRef(({ name, duration, category, onComplete, onViewHistory }, ref) => {
+  // Get theme context
+  const { theme } = use_theme();
+  
   // State management for timer functionality
   const [remaining_time, set_remaining_time] = useState(duration);
   const [is_running, set_is_running] = useState(false);
@@ -51,9 +55,9 @@ const Timer = forwardRef(({ name, duration, category, onComplete, onViewHistory 
    * @returns {string} - Color code for the current state
    */
   const get_state_color = () => {
-    if (remaining_time === 0) return '#6c757d'; // Gray for completed
-    if (is_running) return '#28a745'; // Green for running
-    return '#ffc107'; // Yellow for paused
+    if (remaining_time === 0) return theme.timer_completed; // Gray for completed
+    if (is_running) return theme.timer_running; // Green for running
+    return theme.timer_paused; // Yellow for paused
   };
 
   /**
@@ -227,13 +231,16 @@ const Timer = forwardRef(({ name, duration, category, onComplete, onViewHistory 
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { 
+      backgroundColor: theme.card_background,
+      shadowColor: theme.shadow_color 
+    }]}>
       {/* Timer Header */}
       <View style={styles.header}>
-        <Text style={styles.timer_name}>{name}</Text>
+        <Text style={[styles.timer_name, { color: theme.text_primary }]}>{name}</Text>
         {category && (
-          <View style={styles.category_badge}>
-            <Text style={styles.category_text}>{category}</Text>
+          <View style={[styles.category_badge, { backgroundColor: theme.button_primary }]}>
+            <Text style={[styles.category_text, { color: theme.text_inverse }]}>{category}</Text>
           </View>
         )}
       </View>
@@ -244,7 +251,7 @@ const Timer = forwardRef(({ name, duration, category, onComplete, onViewHistory 
           progress={calculate_progress()} 
           color={get_state_color()}
           height={8}
-          background_color="#e9ecef"
+          background_color={theme.border_secondary}
         />
         <View style={styles.progress_info}>
           <Text style={[styles.progress_percentage, { color: get_state_color() }]}>
@@ -261,35 +268,35 @@ const Timer = forwardRef(({ name, duration, category, onComplete, onViewHistory 
 
       {/* Timer Display */}
       <View style={styles.time_display}>
-        <Text style={styles.time_text}>{format_time(remaining_time)}</Text>
+        <Text style={[styles.time_text, { color: theme.button_primary }]}>{format_time(remaining_time)}</Text>
       </View>
 
       {/* Control Buttons */}
       <View style={styles.controls}>
         {!is_running ? (
           <TouchableOpacity 
-            style={[styles.button, styles.start_button]} 
+            style={[styles.button, { backgroundColor: theme.button_success }]} 
             onPress={start_timer}
             disabled={remaining_time === 0}
           >
-            <Text style={styles.button_text}>
+            <Text style={[styles.button_text, { color: theme.text_inverse }]}>
               {remaining_time === 0 ? 'Completed' : 'Start'}
             </Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity 
-            style={[styles.button, styles.pause_button]} 
+            style={[styles.button, { backgroundColor: theme.button_warning }]} 
             onPress={pause_timer}
           >
-            <Text style={styles.button_text}>Pause</Text>
+            <Text style={[styles.button_text, { color: theme.text_inverse }]}>Pause</Text>
           </TouchableOpacity>
         )}
         
         <TouchableOpacity 
-          style={[styles.button, styles.reset_button]} 
+          style={[styles.button, { backgroundColor: theme.button_danger }]} 
           onPress={reset_timer}
         >
-          <Text style={styles.button_text}>Reset</Text>
+          <Text style={[styles.button_text, { color: theme.text_inverse }]}>Reset</Text>
         </TouchableOpacity>
       </View>
 
@@ -307,12 +314,10 @@ const Timer = forwardRef(({ name, duration, category, onComplete, onViewHistory 
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#f8f9fa',
     borderRadius: 12,
     padding: 20,
     margin: 10,
     alignItems: 'center',
-    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -328,19 +333,16 @@ const styles = StyleSheet.create({
   timer_name: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
     textAlign: 'center',
     marginBottom: 5,
   },
   category_badge: {
-    backgroundColor: '#007AFF',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
   category_text: {
     fontSize: 12,
-    color: '#fff',
     fontWeight: '600',
   },
   progress_container: {
@@ -370,20 +372,17 @@ const styles = StyleSheet.create({
   },
   state_text: {
     fontSize: 14,
-    color: '#666',
     fontWeight: '500',
   },
   time_display: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#007AFF',
     marginBottom: 10,
     fontFamily: 'monospace',
   },
   time_text: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#007AFF',
     fontFamily: 'monospace',
   },
   controls: {
@@ -397,17 +396,7 @@ const styles = StyleSheet.create({
     minWidth: 80,
     alignItems: 'center',
   },
-  start_button: {
-    backgroundColor: '#28a745',
-  },
-  pause_button: {
-    backgroundColor: '#ffc107',
-  },
-  reset_button: {
-    backgroundColor: '#dc3545',
-  },
   button_text: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },

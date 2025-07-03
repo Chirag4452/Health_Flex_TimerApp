@@ -1,6 +1,7 @@
 import React, { useRef, forwardRef, useImperativeHandle } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, PanResponder, Dimensions, Alert } from 'react-native';
 import Timer from './Timer';
+import { use_theme } from '../contexts/ThemeContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 const SWIPE_THRESHOLD = screenWidth * 0.3; // 30% of screen width
@@ -16,6 +17,7 @@ const SWIPE_THRESHOLD = screenWidth * 0.3; // 30% of screen width
  * @param {Object} ref - React ref for external control
  */
 const SwipeableTimer = forwardRef(({ timer, onComplete, onDelete, onViewHistory }, ref) => {
+  const { theme } = use_theme();
   const translateX = useRef(new Animated.Value(0)).current;
   const lastOffset = useRef(0);
 
@@ -161,10 +163,10 @@ const SwipeableTimer = forwardRef(({ timer, onComplete, onDelete, onViewHistory 
   return (
     <View style={styles.container}>
       {/* Delete Button (Hidden behind the timer) */}
-      <View style={styles.delete_container}>
+      <View style={[styles.delete_container, { backgroundColor: theme.button_danger }]}>
         <TouchableOpacity style={styles.delete_button} onPress={handle_delete}>
           <Text style={styles.delete_text}>🗑️</Text>
-          <Text style={styles.delete_label}>Delete</Text>
+          <Text style={[styles.delete_label, { color: theme.text_inverse }]}>Delete</Text>
         </TouchableOpacity>
       </View>
 
@@ -173,6 +175,7 @@ const SwipeableTimer = forwardRef(({ timer, onComplete, onDelete, onViewHistory 
         style={[
           styles.timer_container,
           {
+            backgroundColor: theme.background_primary,
             transform: [{ translateX }],
           },
         ]}
@@ -199,7 +202,6 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   timer_container: {
-    backgroundColor: '#fff',
     zIndex: 1,
   },
   delete_container: {
@@ -210,7 +212,6 @@ const styles = StyleSheet.create({
     width: 120,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#ff4444',
     borderRadius: 12,
     marginHorizontal: 10,
     zIndex: 0,
@@ -226,7 +227,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   delete_label: {
-    color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
   },

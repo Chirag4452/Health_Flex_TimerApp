@@ -1,20 +1,27 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
+import { use_theme } from '../contexts/ThemeContext';
 
 /**
  * ProgressBar component - Visual progress indicator
  * Props:
  * - progress: number (0-1) - Progress percentage as decimal
- * - color: string - Color of the progress bar
+ * - color: string - Color of the progress bar (optional, defaults to theme primary)
  * - height: number - Height of the progress bar (optional, default 8)
- * - backgroundColor: string - Background color (optional, default light gray)
+ * - backgroundColor: string - Background color (optional, defaults to theme secondary background)
  */
 export default function ProgressBar({ 
   progress, 
-  color = '#007AFF', 
+  color, 
   height = 8, 
-  background_color = '#e9ecef' 
+  background_color 
 }) {
+  const { theme } = use_theme();
+  
+  // Use theme colors as defaults if not provided
+  const progress_color = color || theme.button_primary;
+  const bg_color = background_color || theme.background_secondary;
+  
   // Animated value for smooth progress transitions
   const animated_progress = useRef(new Animated.Value(0)).current;
 
@@ -40,13 +47,13 @@ export default function ProgressBar({
   });
 
   return (
-    <View style={[styles.container, { height, backgroundColor: background_color }]}>
+    <View style={[styles.container, { height, backgroundColor: bg_color }]}>
       <Animated.View
         style={[
           styles.progress_fill,
           {
             width: animated_width,
-            backgroundColor: color,
+            backgroundColor: progress_color,
             height: height,
           },
         ]}

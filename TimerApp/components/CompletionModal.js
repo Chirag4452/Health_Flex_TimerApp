@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Modal, TouchableOpacity, StyleSheet, Animated, Dimensions } from 'react-native';
+import { use_theme } from '../contexts/ThemeContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -19,6 +20,8 @@ export default function CompletionModal({
   onRestart, 
   onViewHistory 
 }) {
+  const { theme } = use_theme();
+
   /**
    * Formats duration in seconds to MM:SS format
    * @param {number} seconds - Duration in seconds
@@ -37,36 +40,45 @@ export default function CompletionModal({
       visible={visible}
       onRequestClose={onClose}
     >
-      <View style={styles.modal_overlay}>
-        <View style={styles.modal_container}>
+      <View style={[styles.modal_overlay, { backgroundColor: theme.overlay }]}>
+        <View style={[styles.modal_container, { 
+          backgroundColor: theme.background_primary,
+          shadowColor: theme.shadow 
+        }]}>
           {/* Celebration Header */}
           <View style={styles.celebration_header}>
             <Text style={styles.celebration_emoji}>🎉</Text>
-            <Text style={styles.celebration_title}>Timer Complete!</Text>
+            <Text style={[styles.celebration_title, { color: theme.button_success }]}>Timer Complete!</Text>
             <Text style={styles.celebration_emoji}>🎉</Text>
           </View>
 
           {/* Timer Details */}
-          <View style={styles.timer_details}>
-            <Text style={styles.timer_name}>{timer_data?.name || 'Timer'}</Text>
+          <View style={[styles.timer_details, { 
+            backgroundColor: theme.background_secondary,
+            borderColor: theme.border 
+          }]}>
+            <Text style={[styles.timer_name, { color: theme.text_primary }]}>{timer_data?.name || 'Timer'}</Text>
             {timer_data?.duration && (
-              <Text style={styles.timer_duration}>
+              <Text style={[styles.timer_duration, { color: theme.text_secondary }]}>
                 Duration: {format_time(timer_data.duration)}
               </Text>
             )}
             {timer_data?.category && (
               <View style={styles.category_container}>
-                <Text style={styles.category_label}>Category:</Text>
-                <View style={styles.category_badge}>
-                  <Text style={styles.category_text}>{timer_data.category}</Text>
+                <Text style={[styles.category_label, { color: theme.text_secondary }]}>Category:</Text>
+                <View style={[styles.category_badge, { backgroundColor: theme.button_primary }]}>
+                  <Text style={[styles.category_text, { color: theme.text_inverse }]}>{timer_data.category}</Text>
                 </View>
               </View>
             )}
           </View>
 
           {/* Congratulatory Message */}
-          <View style={styles.message_container}>
-            <Text style={styles.congrats_message}>
+          <View style={[styles.message_container, { 
+            backgroundColor: theme.stats_background,
+            borderLeftColor: theme.button_success 
+          }]}>
+            <Text style={[styles.congrats_message, { color: theme.text_primary }]}>
               Congratulations! You've successfully completed your timer. 
               Great job staying focused! 💪
             </Text>
@@ -76,29 +88,33 @@ export default function CompletionModal({
           <View style={styles.buttons_container}>
             {/* Restart Timer Button */}
             <TouchableOpacity
-              style={[styles.action_button, styles.restart_button]}
+              style={[styles.action_button, { backgroundColor: theme.button_success }]}
               onPress={onRestart}
               activeOpacity={0.8}
             >
-              <Text style={styles.restart_button_text}>🔄 Restart Timer</Text>
+              <Text style={[styles.button_text, { color: theme.text_inverse }]}>🔄 Restart Timer</Text>
             </TouchableOpacity>
 
             {/* View History Button */}
             <TouchableOpacity
-              style={[styles.action_button, styles.history_button]}
+              style={[styles.action_button, { backgroundColor: theme.button_primary }]}
               onPress={onViewHistory}
               activeOpacity={0.8}
             >
-              <Text style={styles.history_button_text}>📊 View History</Text>
+              <Text style={[styles.button_text, { color: theme.text_inverse }]}>📊 View History</Text>
             </TouchableOpacity>
 
             {/* Close Button */}
             <TouchableOpacity
-              style={[styles.action_button, styles.close_button]}
+              style={[styles.action_button, { 
+                backgroundColor: theme.background_secondary,
+                borderWidth: 1,
+                borderColor: theme.border
+              }]}
               onPress={onClose}
               activeOpacity={0.8}
             >
-              <Text style={styles.close_button_text}>✨ Close</Text>
+              <Text style={[styles.button_text, { color: theme.text_primary }]}>✨ Close</Text>
             </TouchableOpacity>
           </View>
 
@@ -117,18 +133,15 @@ export default function CompletionModal({
 const styles = StyleSheet.create({
   modal_overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modal_container: {
-    backgroundColor: '#fff',
     borderRadius: 20,
     padding: 25,
     width: width * 0.9,
     maxWidth: 400,
-    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 10,
@@ -151,28 +164,23 @@ const styles = StyleSheet.create({
   celebration_title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2E7D32',
     textAlign: 'center',
   },
   timer_details: {
     alignItems: 'center',
     marginBottom: 20,
     padding: 15,
-    backgroundColor: '#f8f9fa',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e9ecef',
   },
   timer_name: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
     textAlign: 'center',
     marginBottom: 8,
   },
   timer_duration: {
     fontSize: 16,
-    color: '#666',
     marginBottom: 8,
   },
   category_container: {
@@ -182,30 +190,24 @@ const styles = StyleSheet.create({
   },
   category_label: {
     fontSize: 14,
-    color: '#666',
   },
   category_badge: {
-    backgroundColor: '#007AFF',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
   category_text: {
-    color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
   },
   message_container: {
     marginBottom: 25,
     padding: 15,
-    backgroundColor: '#e8f5e8',
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#4CAF50',
   },
   congrats_message: {
     fontSize: 16,
-    color: '#2E7D32',
     textAlign: 'center',
     lineHeight: 22,
     fontStyle: 'italic',
@@ -227,29 +229,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  restart_button: {
-    backgroundColor: '#4CAF50',
-  },
-  restart_button_text: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  history_button: {
-    backgroundColor: '#2196F3',
-  },
-  history_button_text: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  close_button: {
-    backgroundColor: '#f8f9fa',
-    borderWidth: 1,
-    borderColor: '#dee2e6',
-  },
-  close_button_text: {
-    color: '#495057',
+  button_text: {
     fontSize: 16,
     fontWeight: 'bold',
   },

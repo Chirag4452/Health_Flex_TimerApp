@@ -10,6 +10,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
+import { use_theme } from '../contexts/ThemeContext';
 
 // Predefined category options
 const PREDEFINED_CATEGORIES = [
@@ -25,6 +26,9 @@ const PREDEFINED_CATEGORIES = [
  * Allows users to input timer name, duration, and category with validation
  */
 export default function AddTimerScreen({ navigation }) {
+  // Get theme context
+  const { theme } = use_theme();
+  
   // Form state management
   const [timer_name, set_timer_name] = useState('');
   const [duration_minutes, set_duration_minutes] = useState('');
@@ -156,21 +160,26 @@ export default function AddTimerScreen({ navigation }) {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.background_primary }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView style={styles.scroll_container} keyboardShouldPersistTaps="handled">
         <View style={styles.form_container}>
           {/* Header */}
-          <Text style={styles.title}>Add New Timer</Text>
-          <Text style={styles.subtitle}>Create a custom timer with your preferred duration and category</Text>
+          <Text style={[styles.title, { color: theme.text_primary }]}>Add New Timer</Text>
+          <Text style={[styles.subtitle, { color: theme.text_secondary }]}>Create a custom timer with your preferred duration and category</Text>
 
           {/* Timer Name Input */}
           <View style={styles.input_group}>
-            <Text style={styles.label}>Timer Name</Text>
+            <Text style={[styles.label, { color: theme.text_primary }]}>Timer Name</Text>
             <TextInput
-              style={styles.text_input}
+              style={[styles.text_input, { 
+                backgroundColor: theme.card_background,
+                borderColor: theme.border_primary,
+                color: theme.text_primary 
+              }]}
               placeholder="Enter timer name (e.g., Study Session)"
+              placeholderTextColor={theme.text_tertiary}
               value={timer_name}
               onChangeText={set_timer_name}
               maxLength={50}
@@ -181,10 +190,15 @@ export default function AddTimerScreen({ navigation }) {
 
           {/* Duration Input */}
           <View style={styles.input_group}>
-            <Text style={styles.label}>Duration (minutes)</Text>
+            <Text style={[styles.label, { color: theme.text_primary }]}>Duration (minutes)</Text>
             <TextInput
-              style={styles.text_input}
+              style={[styles.text_input, { 
+                backgroundColor: theme.card_background,
+                borderColor: theme.border_primary,
+                color: theme.text_primary 
+              }]}
               placeholder="Enter duration in minutes"
+              placeholderTextColor={theme.text_tertiary}
               value={duration_minutes}
               onChangeText={set_duration_minutes}
               keyboardType="numeric"
@@ -192,7 +206,7 @@ export default function AddTimerScreen({ navigation }) {
               returnKeyType="done"
             />
             {duration_minutes && (
-              <Text style={styles.helper_text}>
+              <Text style={[styles.helper_text, { color: theme.text_secondary }]}>
                 ≈ {Math.floor(parseFloat(duration_minutes) || 0)} minutes
               </Text>
             )}
@@ -200,45 +214,52 @@ export default function AddTimerScreen({ navigation }) {
 
           {/* Category Selection */}
           <View style={styles.input_group}>
-            <Text style={styles.label}>Category</Text>
+            <Text style={[styles.label, { color: theme.text_primary }]}>Category</Text>
             <View style={styles.category_container}>
-              {PREDEFINED_CATEGORIES.map((category) => (
-                <TouchableOpacity
-                  key={category.id}
-                  style={[
-                    styles.category_button,
-                    (selected_category === category.id || (category.id === 'other' && is_custom_category))
-                      ? styles.category_button_selected 
-                      : null
-                  ]}
-                  onPress={() => handle_category_select(category.id)}
-                >
-                  <Text style={styles.category_icon}>{category.icon}</Text>
-                  <Text style={[
-                    styles.category_text,
-                    (selected_category === category.id || (category.id === 'other' && is_custom_category))
-                      ? styles.category_text_selected 
-                      : null
-                  ]}>
-                    {category.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {PREDEFINED_CATEGORIES.map((category) => {
+                const is_selected = (selected_category === category.id || (category.id === 'other' && is_custom_category));
+                return (
+                  <TouchableOpacity
+                    key={category.id}
+                    style={[
+                      styles.category_button,
+                      { 
+                        backgroundColor: is_selected ? theme.button_primary : theme.card_background,
+                        borderColor: is_selected ? theme.button_primary : theme.border_primary 
+                      }
+                    ]}
+                    onPress={() => handle_category_select(category.id)}
+                  >
+                    <Text style={styles.category_icon}>{category.icon}</Text>
+                    <Text style={[
+                      styles.category_text,
+                      { color: is_selected ? theme.text_inverse : theme.text_primary }
+                    ]}>
+                      {category.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
             {/* Custom Category Input */}
             {is_custom_category && (
               <View style={styles.custom_category_container}>
                 <TextInput
-                  style={styles.text_input}
+                  style={[styles.text_input, { 
+                    backgroundColor: theme.card_background,
+                    borderColor: theme.border_primary,
+                    color: theme.text_primary 
+                  }]}
                   placeholder="Enter custom category"
+                  placeholderTextColor={theme.text_tertiary}
                   value={custom_category}
                   onChangeText={set_custom_category}
                   maxLength={20}
                   autoCapitalize="words"
                   returnKeyType="done"
                 />
-                <Text style={styles.helper_text}>
+                <Text style={[styles.helper_text, { color: theme.text_secondary }]}>
                   Custom category ({custom_category.length}/20 characters)
                 </Text>
               </View>
@@ -248,17 +269,21 @@ export default function AddTimerScreen({ navigation }) {
           {/* Action Buttons */}
           <View style={styles.button_container}>
             <TouchableOpacity
-              style={[styles.button, styles.clear_button]}
+              style={[styles.button, { 
+                backgroundColor: 'transparent',
+                borderWidth: 1,
+                borderColor: theme.border_primary 
+              }]}
               onPress={handle_clear_form}
             >
-              <Text style={styles.clear_button_text}>Clear</Text>
+              <Text style={[styles.clear_button_text, { color: theme.text_primary }]}>Clear</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.button, styles.save_button]}
+              style={[styles.button, { backgroundColor: theme.button_primary }]}
               onPress={handle_save_timer}
             >
-              <Text style={styles.save_button_text}>Save Timer</Text>
+              <Text style={[styles.save_button_text, { color: theme.text_inverse }]}>Save Timer</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -270,7 +295,6 @@ export default function AddTimerScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   scroll_container: {
     flex: 1,
@@ -282,13 +306,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
     textAlign: 'center',
     marginBottom: 40,
   },
@@ -298,21 +320,16 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 8,
   },
   text_input: {
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 8,
     padding: 15,
     fontSize: 16,
-    backgroundColor: '#f9f9f9',
-    color: '#333',
   },
   helper_text: {
     fontSize: 14,
-    color: '#666',
     marginTop: 5,
     fontStyle: 'italic',
   },
@@ -329,13 +346,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#f9f9f9',
     minWidth: 90,
-  },
-  category_button_selected: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
   },
   category_icon: {
     fontSize: 16,
@@ -343,12 +354,7 @@ const styles = StyleSheet.create({
   },
   category_text: {
     fontSize: 14,
-    color: '#333',
     fontWeight: '500',
-  },
-  category_text_selected: {
-    color: '#fff',
-    fontWeight: 'bold',
   },
   custom_category_container: {
     marginTop: 10,
@@ -365,21 +371,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  save_button: {
-    backgroundColor: '#007AFF',
-  },
-  clear_button: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
   save_button_text: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
   clear_button_text: {
-    color: '#666',
     fontSize: 16,
     fontWeight: '600',
   },

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SectionList, TouchableOpacity, Alert, ActivityIndicator, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { use_theme } from '../contexts/ThemeContext';
 import { 
   load_history, 
   clear_history, 
@@ -16,6 +17,9 @@ import {
  * Shows timers grouped by date with statistics and clear functionality
  */
 export default function HistoryScreen() {
+  // Get theme context
+  const { theme } = use_theme();
+  
   // State for history data and loading
   const [history_data, set_history_data] = useState([]);
   const [raw_history, set_raw_history] = useState([]);
@@ -114,27 +118,31 @@ export default function HistoryScreen() {
    */
   const render_history_item = ({ item }) => {
     return (
-      <View style={styles.history_item}>
+      <View style={[styles.history_item, { 
+        backgroundColor: theme.card_background,
+        shadowColor: theme.shadow_color,
+        borderLeftColor: theme.button_success 
+      }]}>
         <View style={styles.item_header}>
-          <Text style={styles.timer_name}>{item.timer_name}</Text>
-          <Text style={styles.completion_time}>
+          <Text style={[styles.timer_name, { color: theme.text_primary }]}>{item.timer_name}</Text>
+          <Text style={[styles.completion_time, { color: theme.text_secondary }]}>
             {format_completion_time(item.completion_time)}
           </Text>
         </View>
         
         <View style={styles.item_details}>
           <View style={styles.duration_container}>
-            <Text style={styles.duration_label}>Duration:</Text>
-            <Text style={styles.duration_value}>
+            <Text style={[styles.duration_label, { color: theme.text_secondary }]}>Duration:</Text>
+            <Text style={[styles.duration_value, { color: theme.button_success }]}>
               {format_duration(item.original_duration)}
             </Text>
           </View>
           
           {item.category && (
             <View style={styles.category_container}>
-              <Text style={styles.category_label}>Category:</Text>
-              <View style={styles.category_badge}>
-                <Text style={styles.category_text}>{item.category}</Text>
+              <Text style={[styles.category_label, { color: theme.text_secondary }]}>Category:</Text>
+              <View style={[styles.category_badge, { backgroundColor: theme.button_primary }]}>
+                <Text style={[styles.category_text, { color: theme.text_inverse }]}>{item.category}</Text>
               </View>
             </View>
           )}
@@ -151,14 +159,17 @@ export default function HistoryScreen() {
     const total_time = section.data.reduce((sum, entry) => sum + entry.original_duration, 0);
     
     return (
-      <View style={styles.section_header}>
+      <View style={[styles.section_header, { 
+        backgroundColor: theme.section_header_background, 
+        borderBottomColor: theme.border_primary 
+      }]}>
         <View style={styles.section_header_main}>
-          <Text style={styles.section_title}>{section.title}</Text>
+          <Text style={[styles.section_title, { color: theme.text_primary }]}>{section.title}</Text>
           <View style={styles.section_stats}>
-            <Text style={styles.section_count}>
+            <Text style={[styles.section_count, { color: theme.text_secondary }]}>
               {entries_count} timer{entries_count !== 1 ? 's' : ''}
             </Text>
-            <Text style={styles.section_total_time}>
+            <Text style={[styles.section_total_time, { color: theme.button_primary }]}>
               {format_duration(total_time)} total
             </Text>
           </View>
@@ -176,24 +187,30 @@ export default function HistoryScreen() {
     const total_timers = raw_history.length;
 
     return (
-      <View style={styles.header}>
-        <Text style={styles.screen_title}>Timer History</Text>
+      <View style={[styles.header, { 
+        backgroundColor: theme.background_secondary, 
+        borderBottomColor: theme.border_primary 
+      }]}>
+        <Text style={[styles.screen_title, { color: theme.text_primary }]}>Timer History</Text>
         
         {/* Today's Statistics */}
         {today_count > 0 && (
-          <View style={styles.today_stats}>
-            <Text style={styles.today_stats_title}>Today's Progress</Text>
+          <View style={[styles.today_stats, { 
+            backgroundColor: theme.stats_background, 
+            borderLeftColor: theme.stats_border 
+          }]}>
+            <Text style={[styles.today_stats_title, { color: theme.stats_text }]}>Today's Progress</Text>
             <View style={styles.stats_row}>
               <View style={styles.stat_item}>
-                <Text style={styles.stat_value}>{today_count}</Text>
-                <Text style={styles.stat_label}>
+                <Text style={[styles.stat_value, { color: theme.stats_text }]}>{today_count}</Text>
+                <Text style={[styles.stat_label, { color: theme.text_secondary }]}>
                   Timer{today_count !== 1 ? 's' : ''} Completed
                 </Text>
               </View>
-              <View style={styles.stat_divider} />
+              <View style={[styles.stat_divider, { backgroundColor: theme.stats_border }]} />
               <View style={styles.stat_item}>
-                <Text style={styles.stat_value}>{format_duration(today_total_time)}</Text>
-                <Text style={styles.stat_label}>Total Time</Text>
+                <Text style={[styles.stat_value, { color: theme.stats_text }]}>{format_duration(today_total_time)}</Text>
+                <Text style={[styles.stat_label, { color: theme.text_secondary }]}>Total Time</Text>
               </View>
             </View>
           </View>
@@ -202,35 +219,24 @@ export default function HistoryScreen() {
         {/* Total Statistics */}
         {total_timers > 0 && (
           <View style={styles.total_stats}>
-            <Text style={styles.total_stats_text}>
+            <Text style={[styles.total_stats_text, { color: theme.text_secondary }]}>
               📊 {total_timers} total timer{total_timers !== 1 ? 's' : ''} completed
             </Text>
           </View>
         )}
 
-        {/* Test Add History Button */}
-        <TouchableOpacity
-          style={styles.test_button}
-          onPress={async () => {
-            console.log(`🧪 Test: Adding test timer to history...`);
-            const { add_timer_to_history } = require('../utils/history');
-            const success = await add_timer_to_history('Test Timer', 60, 'Test');
-            console.log(`🧪 Test result: ${success ? 'Success' : 'Failed'}`);
-            if (success) {
-              await load_history_data();
-            }
-          }}
-        >
-          <Text style={styles.test_button_text}>🧪 Test Add History</Text>
-        </TouchableOpacity>
+
 
         {/* Clear History Button */}
         {total_timers > 0 && (
           <TouchableOpacity
-            style={styles.clear_button}
+            style={[styles.clear_button, { 
+              backgroundColor: theme.button_danger,
+              shadowColor: theme.shadow_color 
+            }]}
             onPress={handle_clear_history}
           >
-            <Text style={styles.clear_button_text}>🗑️ Clear History</Text>
+            <Text style={[styles.clear_button_text, { color: theme.text_inverse }]}>🗑️ Clear History</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -243,11 +249,11 @@ export default function HistoryScreen() {
   const render_empty_state = () => (
     <View style={styles.empty_state_container}>
       <Text style={styles.empty_state_emoji}>📈</Text>
-      <Text style={styles.empty_state_title}>No Timer History</Text>
-      <Text style={styles.empty_state_message}>
+      <Text style={[styles.empty_state_title, { color: theme.text_primary }]}>No Timer History</Text>
+      <Text style={[styles.empty_state_message, { color: theme.text_secondary }]}>
         Complete some timers to see your progress here.
       </Text>
-      <Text style={styles.empty_state_subtitle}>
+      <Text style={[styles.empty_state_subtitle, { color: theme.text_tertiary }]}>
         Your completed timers will be automatically tracked and organized by date.
       </Text>
     </View>
@@ -264,15 +270,15 @@ export default function HistoryScreen() {
   // Show loading indicator
   if (is_loading) {
     return (
-      <View style={styles.loading_container}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loading_text}>Loading your timer history...</Text>
+      <View style={[styles.loading_container, { backgroundColor: theme.background_primary }]}>
+        <ActivityIndicator size="large" color={theme.button_primary} />
+        <Text style={[styles.loading_text, { color: theme.text_secondary }]}>Loading your timer history...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background_primary }]}>
       <SectionList
         sections={history_data}
         keyExtractor={(item) => item.id}
@@ -286,8 +292,8 @@ export default function HistoryScreen() {
           <RefreshControl
             refreshing={is_refreshing}
             onRefresh={handle_refresh}
-            colors={['#007AFF']}
-            tintColor="#007AFF"
+            colors={[theme.button_primary]}
+            tintColor={theme.button_primary}
           />
         }
       />
@@ -298,44 +304,35 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   loading_container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
   },
   loading_text: {
     marginTop: 15,
     fontSize: 16,
-    color: '#666',
   },
   header: {
     padding: 20,
-    backgroundColor: '#f8f9fa',
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
   },
   screen_title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
     textAlign: 'center',
     marginBottom: 20,
   },
   today_stats: {
-    backgroundColor: '#e8f5e8',
     padding: 15,
     borderRadius: 12,
     marginBottom: 15,
     borderLeftWidth: 4,
-    borderLeftColor: '#4CAF50',
   },
   today_stats_title: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2E7D32',
     marginBottom: 10,
     textAlign: 'center',
   },
@@ -350,18 +347,15 @@ const styles = StyleSheet.create({
   stat_value: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2E7D32',
   },
   stat_label: {
     fontSize: 12,
-    color: '#666',
     textAlign: 'center',
     marginTop: 4,
   },
   stat_divider: {
     width: 1,
     height: 40,
-    backgroundColor: '#4CAF50',
     marginHorizontal: 15,
   },
   total_stats: {
@@ -370,37 +364,14 @@ const styles = StyleSheet.create({
   },
   total_stats_text: {
     fontSize: 14,
-    color: '#666',
     fontStyle: 'italic',
   },
-  test_button: {
-    backgroundColor: '#6f42c1',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  test_button_text: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
+
   clear_button: {
-    backgroundColor: '#dc3545',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: 'center',
-    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -410,14 +381,11 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   clear_button_text: {
-    color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
   },
   section_header: {
-    backgroundColor: '#f8f9fa',
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
   },
   section_header_main: {
     paddingVertical: 12,
@@ -426,7 +394,6 @@ const styles = StyleSheet.create({
   section_title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 4,
   },
   section_stats: {
@@ -435,21 +402,17 @@ const styles = StyleSheet.create({
   },
   section_count: {
     fontSize: 14,
-    color: '#666',
     fontWeight: '500',
   },
   section_total_time: {
     fontSize: 14,
-    color: '#007AFF',
     fontWeight: '500',
   },
   history_item: {
-    backgroundColor: '#fff',
     marginHorizontal: 15,
     marginVertical: 5,
     padding: 15,
     borderRadius: 12,
-    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -458,7 +421,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     borderLeftWidth: 4,
-    borderLeftColor: '#4CAF50',
   },
   item_header: {
     flexDirection: 'row',
@@ -469,13 +431,11 @@ const styles = StyleSheet.create({
   timer_name: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
     flex: 1,
     marginRight: 10,
   },
   completion_time: {
     fontSize: 14,
-    color: '#666',
     fontWeight: '500',
   },
   item_details: {
@@ -489,13 +449,11 @@ const styles = StyleSheet.create({
   },
   duration_label: {
     fontSize: 12,
-    color: '#666',
     marginRight: 5,
   },
   duration_value: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#4CAF50',
   },
   category_container: {
     flexDirection: 'row',
@@ -503,17 +461,14 @@ const styles = StyleSheet.create({
   },
   category_label: {
     fontSize: 12,
-    color: '#666',
     marginRight: 5,
   },
   category_badge: {
-    backgroundColor: '#007AFF',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
   },
   category_text: {
-    color: '#fff',
     fontSize: 11,
     fontWeight: 'bold',
   },
@@ -534,20 +489,17 @@ const styles = StyleSheet.create({
   empty_state_title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 15,
     textAlign: 'center',
   },
   empty_state_message: {
     fontSize: 16,
-    color: '#666',
     textAlign: 'center',
     marginBottom: 10,
     lineHeight: 22,
   },
   empty_state_subtitle: {
     fontSize: 14,
-    color: '#999',
     textAlign: 'center',
     fontStyle: 'italic',
     lineHeight: 20,

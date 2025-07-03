@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import Timer from '../components/Timer';
 import SwipeableTimer from '../components/SwipeableTimer';
 import { save_timers, load_timers } from '../utils/storage';
+import { use_theme } from '../contexts/ThemeContext';
 
 /**
  * HomeScreen component - displays the main home screen of the Timer App
@@ -11,6 +12,9 @@ import { save_timers, load_timers } from '../utils/storage';
  * Persists timers data using AsyncStorage
  */
 export default function HomeScreen({ navigation, route }) {
+  // Get theme context
+  const { theme } = use_theme();
+  
   // State for storing all timers (both default and custom)
   const [timers_list, set_timers_list] = useState([]);
   
@@ -396,24 +400,24 @@ export default function HomeScreen({ navigation, route }) {
     return (
       <View style={styles.bulk_actions_container}>
         <TouchableOpacity
-          style={[styles.bulk_action_button, styles.start_all_button]}
+          style={[styles.bulk_action_button, { backgroundColor: theme.button_success }]}
           onPress={() => handle_bulk_action('start', section.all_data, section.title)}
         >
-          <Text style={styles.bulk_action_text}>Start All</Text>
+          <Text style={[styles.bulk_action_text, { color: theme.text_inverse }]}>Start All</Text>
         </TouchableOpacity>
         
         <TouchableOpacity
-          style={[styles.bulk_action_button, styles.pause_all_button]}
+          style={[styles.bulk_action_button, { backgroundColor: theme.button_warning }]}
           onPress={() => handle_bulk_action('pause', section.all_data, section.title)}
         >
-          <Text style={styles.bulk_action_text}>Pause All</Text>
+          <Text style={[styles.bulk_action_text, { color: theme.text_inverse }]}>Pause All</Text>
         </TouchableOpacity>
         
         <TouchableOpacity
-          style={[styles.bulk_action_button, styles.reset_all_button]}
+          style={[styles.bulk_action_button, { backgroundColor: theme.button_danger }]}
           onPress={() => handle_bulk_action('reset', section.all_data, section.title)}
         >
-          <Text style={styles.bulk_action_text}>Reset All</Text>
+          <Text style={[styles.bulk_action_text, { color: theme.text_inverse }]}>Reset All</Text>
         </TouchableOpacity>
       </View>
     );
@@ -427,7 +431,10 @@ export default function HomeScreen({ navigation, route }) {
     const timer_count = section.all_data.length;
     
     return (
-      <View style={styles.section_header}>
+      <View style={[styles.section_header, { 
+        backgroundColor: theme.section_header_background, 
+        borderBottomColor: theme.border_primary 
+      }]}>
         <TouchableOpacity
           style={styles.section_header_main}
           onPress={() => toggle_section(section.id)}
@@ -435,11 +442,11 @@ export default function HomeScreen({ navigation, route }) {
         >
           <View style={styles.section_header_content}>
             <View style={styles.section_title_container}>
-              <Text style={styles.section_title}>{section.title}</Text>
-              <Text style={styles.timer_count}>({timer_count})</Text>
+              <Text style={[styles.section_title, { color: theme.text_primary }]}>{section.title}</Text>
+              <Text style={[styles.timer_count, { color: theme.text_secondary }]}>({timer_count})</Text>
             </View>
             <View style={styles.expand_indicator}>
-              <Text style={styles.expand_icon}>
+              <Text style={[styles.expand_icon, { color: theme.button_primary }]}>
                 {is_expanded ? '▼' : '▶'}
               </Text>
             </View>
@@ -450,7 +457,7 @@ export default function HomeScreen({ navigation, route }) {
         {is_expanded && timer_count > 0 && render_bulk_actions(section)}
         
         {section.is_custom && is_expanded && (
-          <Text style={styles.swipe_hint}>💡 Swipe left to delete</Text>
+          <Text style={[styles.swipe_hint, { color: theme.text_secondary }]}>💡 Swipe left to delete</Text>
         )}
       </View>
     );
@@ -494,24 +501,27 @@ export default function HomeScreen({ navigation, route }) {
    * Renders the header component
    */
   const render_header = () => (
-    <View style={styles.header}>
-      <Text style={styles.screen_title}>My Timers</Text>
+    <View style={[styles.header, { backgroundColor: theme.background_secondary }]}>
+      <Text style={[styles.screen_title, { color: theme.text_primary }]}>My Timers</Text>
       
 
 
       {/* Add Timer Button */}
       <TouchableOpacity
-        style={styles.add_button}
+        style={[styles.add_button, { 
+          backgroundColor: theme.button_primary,
+          shadowColor: theme.shadow_color 
+        }]}
         onPress={handle_add_timer}
       >
-        <Text style={styles.add_button_text}>+ Add Timer</Text>
+        <Text style={[styles.add_button_text, { color: theme.text_inverse }]}>+ Add Timer</Text>
       </TouchableOpacity>
 
       {/* Optional: Show saving indicator */}
       {is_saving && (
         <View style={styles.saving_indicator}>
-          <ActivityIndicator size="small" color="#007AFF" />
-          <Text style={styles.saving_text}>Saving...</Text>
+          <ActivityIndicator size="small" color={theme.button_primary} />
+          <Text style={[styles.saving_text, { color: theme.text_secondary }]}>Saving...</Text>
         </View>
       )}
     </View>
@@ -522,10 +532,10 @@ export default function HomeScreen({ navigation, route }) {
    */
   const render_empty_state = () => (
     <View style={styles.empty_state_container}>
-      <Text style={styles.empty_state_text}>
+      <Text style={[styles.empty_state_text, { color: theme.text_secondary }]}>
         Tap "Add Timer" to create your custom timers with categories
       </Text>
-      <Text style={styles.empty_state_subtext}>
+      <Text style={[styles.empty_state_subtext, { color: theme.text_tertiary }]}>
         Once you have custom timers, you can swipe left to delete them
       </Text>
     </View>
@@ -534,9 +544,9 @@ export default function HomeScreen({ navigation, route }) {
   // Show loading indicator while loading timers
   if (is_loading) {
     return (
-      <View style={styles.loading_container}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loading_text}>Loading your timers...</Text>
+      <View style={[styles.loading_container, { backgroundColor: theme.background_primary }]}>
+        <ActivityIndicator size="large" color={theme.button_primary} />
+        <Text style={[styles.loading_text, { color: theme.text_secondary }]}>Loading your timers...</Text>
       </View>
     );
   }
@@ -544,7 +554,7 @@ export default function HomeScreen({ navigation, route }) {
   const section_data = prepare_section_data();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background_primary }]}>
       <SectionList
         sections={section_data}
         keyExtractor={(item) => item.id}
@@ -563,50 +573,31 @@ export default function HomeScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   loading_container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
   },
   loading_text: {
     marginTop: 15,
     fontSize: 16,
-    color: '#666',
   },
   header: {
     alignItems: 'center',
     paddingVertical: 30,
     paddingHorizontal: 20,
-    backgroundColor: '#f8f9fa',
     marginBottom: 20,
   },
   screen_title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 20,
   },
-  debug_button: {
-    backgroundColor: '#6f42c1',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 15,
-    marginBottom: 10,
-  },
-  debug_button_text: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
   add_button: {
-    backgroundColor: '#007AFF',
     paddingHorizontal: 25,
     paddingVertical: 12,
     borderRadius: 25,
-    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 3,
@@ -616,7 +607,6 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   add_button_text: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -628,12 +618,9 @@ const styles = StyleSheet.create({
   saving_text: {
     marginLeft: 8,
     fontSize: 14,
-    color: '#666',
   },
   section_header: {
-    backgroundColor: '#f8f9fa',
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
     marginBottom: 5,
   },
   section_header_main: {
@@ -652,11 +639,9 @@ const styles = StyleSheet.create({
   section_title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
   },
   timer_count: {
     fontSize: 16,
-    color: '#666',
     marginLeft: 8,
     fontWeight: '500',
   },
@@ -665,7 +650,6 @@ const styles = StyleSheet.create({
   },
   expand_icon: {
     fontSize: 16,
-    color: '#007AFF',
     fontWeight: 'bold',
   },
   bulk_actions_container: {
@@ -681,23 +665,12 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     alignItems: 'center',
   },
-  start_all_button: {
-    backgroundColor: '#28a745',
-  },
-  pause_all_button: {
-    backgroundColor: '#ffc107',
-  },
-  reset_all_button: {
-    backgroundColor: '#dc3545',
-  },
   bulk_action_text: {
-    color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
   },
   swipe_hint: {
     fontSize: 12,
-    color: '#666',
     fontStyle: 'italic',
     paddingHorizontal: 20,
     paddingBottom: 10,
@@ -718,14 +691,12 @@ const styles = StyleSheet.create({
   },
   empty_state_text: {
     fontSize: 16,
-    color: '#666',
     textAlign: 'center',
     fontStyle: 'italic',
     marginBottom: 10,
   },
   empty_state_subtext: {
     fontSize: 14,
-    color: '#999',
     textAlign: 'center',
     fontStyle: 'italic',
   },
