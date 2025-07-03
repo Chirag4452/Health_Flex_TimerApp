@@ -6,9 +6,10 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
  * Props:
  * - name: string - Display name for the timer
  * - duration: number - Timer duration in seconds
+ * - category: string - Timer category (optional)
  * - onComplete: function - Callback when timer reaches zero
  */
-export default function Timer({ name, duration, onComplete }) {
+export default function Timer({ name, duration, category, onComplete }) {
   // State management for timer functionality
   const [remaining_time, set_remaining_time] = useState(duration);
   const [is_running, set_is_running] = useState(false);
@@ -80,8 +81,15 @@ export default function Timer({ name, duration, onComplete }) {
 
   return (
     <View style={styles.container}>
-      {/* Timer name display */}
-      <Text style={styles.timer_name}>{name}</Text>
+      {/* Timer name and category display */}
+      <View style={styles.header_container}>
+        <Text style={styles.timer_name}>{name}</Text>
+        {category && (
+          <View style={styles.category_badge}>
+            <Text style={styles.category_text}>{category}</Text>
+          </View>
+        )}
+      </View>
       
       {/* Remaining time display in MM:SS format */}
       <Text style={styles.time_display}>
@@ -132,11 +140,27 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  header_container: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   timer_name: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 10,
+    textAlign: 'center',
+    marginBottom: 5,
+  },
+  category_badge: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  category_text: {
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: '600',
   },
   time_display: {
     fontSize: 36,

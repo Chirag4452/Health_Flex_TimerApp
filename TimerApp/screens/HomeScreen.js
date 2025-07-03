@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Timer from '../components/Timer';
+import SwipeableTimer from '../components/SwipeableTimer';
 import { save_timers, load_timers } from '../utils/storage';
 
 /**
@@ -18,6 +19,36 @@ export default function HomeScreen({ navigation, route }) {
   
   // State to track if we're currently saving (optional, for debugging)
   const [is_saving, set_is_saving] = useState(false);
+
+  /**
+   * Gets default timers with categories
+   * @returns {Array} - Default timers array with categories
+   */
+  const get_default_timers_with_categories = () => {
+    return [
+      {
+        id: 'default-1',
+        name: '1 Minute Timer',
+        duration: 60,
+        category: 'Break',
+        is_default: true,
+      },
+      {
+        id: 'default-2', 
+        name: '2 Minute Timer',
+        duration: 120,
+        category: 'Break',
+        is_default: true,
+      },
+      {
+        id: 'default-3',
+        name: '5 Minute Timer', 
+        duration: 300,
+        category: 'Study',
+        is_default: true,
+      },
+    ];
+  };
 
   /**
    * Callback function when a timer completes
@@ -39,13 +70,42 @@ export default function HomeScreen({ navigation, route }) {
   };
 
   /**
+   * Handles deleting a custom timer
+   * @param {string} timer_id - ID of the timer to delete
+   */
+  const handle_delete_timer = (timer_id) => {
+    // Remove timer from state
+    set_timers_list(prev_timers => {
+      const updated_timers = prev_timers.filter(timer => timer.id !== timer_id);
+      return updated_timers;
+    });
+    
+    // Show confirmation message
+    Alert.alert(
+      'Timer Deleted',
+      'Timer has been successfully deleted.',
+      [{ text: 'OK' }]
+    );
+  };
+
+  /**
    * Loads timers from storage on component mount
    */
   const load_timers_from_storage = async () => {
     try {
       set_is_loading(true);
       const loaded_timers = await load_timers();
-      set_timers_list(loaded_timers);
+      
+      // If loaded timers don't have categories, merge with defaults that have categories
+      const updated_timers = loaded_timers.map(timer => {
+        if (timer.is_default && !timer.category) {
+          const default_timer = get_default_timers_with_categories().find(def => def.id === timer.id);
+          return default_timer || timer;
+        }
+        return timer;
+      });
+      
+      set_timers_list(updated_timers);
     } catch (error) {
       console.error('Failed to load timers:', error);
       Alert.alert(
@@ -53,6 +113,8 @@ export default function HomeScreen({ navigation, route }) {
         'Failed to load saved timers. Using default timers.',
         [{ text: 'OK' }]
       );
+      // Fallback to default timers with categories
+      set_timers_list(get_default_timers_with_categories());
     } finally {
       set_is_loading(false);
     }
@@ -115,6 +177,16 @@ export default function HomeScreen({ navigation, route }) {
   const custom_timers = timers_list.filter(timer => !timer.is_default);
   const default_timers = timers_list.filter(timer => timer.is_default);
 
+  // Group custom timers by category
+  const grouped_custom_timers = custom_timers.reduce((groups, timer) => {
+    const category = timer.category || 'Uncategorized';
+    if (!groups[category]) {
+      groups[category] = [];
+    }
+    groups[category].push(timer);
+    return groups;
+  }, {});
+
   // Show loading indicator while loading timers
   if (is_loading) {
     return (
@@ -147,17 +219,23 @@ export default function HomeScreen({ navigation, route }) {
         )}
       </View>
 
-      {/* Custom Timers Section */}
-      {custom_timers.length > 0 && (
+      {/* Custom Timers by Category */}
+      {Object.keys(grouped_custom_timers).length > 0 && (
         <View style={styles.section}>
           <Text style={styles.section_title}>Custom Timers</Text>
-          {custom_timers.map((timer) => (
-            <Timer
-              key={timer.id}
-              name={timer.name}
-              duration={timer.duration}
-              onComplete={() => handle_timer_complete(timer.name)}
-            />
+          <Text style={styles.swipe_hint}>💡 Swipe left on custom timers to delete</Text>
+          {Object.entries(grouped_custom_timers).map(([category, timers]) => (
+            <View key={category} style={styles.category_group}>
+              <Text style={styles.category_title}>{category}</Text>
+              {timers.map((timer) => (
+                <SwipeableTimer
+                  key={timer.id}
+                  timer={timer}
+                  onComplete={handle_timer_complete}
+                  onDelete={handle_delete_timer}
+                />
+              ))}
+            </View>
           ))}
         </View>
       )}
@@ -170,6 +248,7 @@ export default function HomeScreen({ navigation, route }) {
             key={timer.id}
             name={timer.name}
             duration={timer.duration}
+            category={timer.category}
             onComplete={() => handle_timer_complete(timer.name)}
           />
         ))}
@@ -179,7 +258,10 @@ export default function HomeScreen({ navigation, route }) {
       {custom_timers.length === 0 && (
         <View style={styles.instructions_container}>
           <Text style={styles.instructions_text}>
-            Tap "Add Timer" to create your custom timers
+            Tap "Add Timer" to create your custom timers with categories
+          </Text>
+          <Text style={styles.swipe_instructions}>
+            Once you have custom timers, you can swipe left to delete them
           </Text>
         </View>
       )}
@@ -256,6 +338,24 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     marginTop: 10,
   },
+  swipe_hint: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+    marginLeft: 20,
+    marginBottom: 10,
+  },
+  category_group: {
+    marginBottom: 20,
+  },
+  category_title: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
+    marginLeft: 20,
+    marginBottom: 10,
+    marginTop: 5,
+  },
   instructions_container: {
     alignItems: 'center',
     paddingVertical: 30,
@@ -264,6 +364,13 @@ const styles = StyleSheet.create({
   instructions_text: {
     fontSize: 16,
     color: '#666',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginBottom: 10,
+  },
+  swipe_instructions: {
+    fontSize: 14,
+    color: '#999',
     textAlign: 'center',
     fontStyle: 'italic',
   },

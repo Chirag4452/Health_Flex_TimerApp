@@ -68,8 +68,8 @@ export const clear_timers = async () => {
 };
 
 /**
- * Gets the default timers array
- * @returns {Array} - Default timers array
+ * Gets the default timers array with categories
+ * @returns {Array} - Default timers array with categories
  */
 const get_default_timers = () => {
   return [
@@ -77,18 +77,21 @@ const get_default_timers = () => {
       id: 'default-1',
       name: '1 Minute Timer',
       duration: 60,
+      category: 'Break',
       is_default: true,
     },
     {
       id: 'default-2', 
       name: '2 Minute Timer',
       duration: 120,
+      category: 'Break',
       is_default: true,
     },
     {
       id: 'default-3',
       name: '5 Minute Timer', 
       duration: 300,
+      category: 'Study',
       is_default: true,
     },
   ];
