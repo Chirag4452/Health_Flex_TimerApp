@@ -30,6 +30,35 @@ A modern, feature-rich timer application built with React Native and Expo, desig
 - **Loading States**: Smooth loading indicators for better user feedback
 - **Error Handling**: Graceful error management and user notifications
 
+## Testing the App
+
+### Option 1: Using Expo Go (Recommended for quick testing)
+1. Install Expo Go app on your Android/iOS device
+2. Clone this repository
+3. Run `npm install` then `npx expo start`
+4. Scan the QR code with Expo Go app
+
+### Option 2: APK Installation
+[Download APK from releases section]: ## Testing the App
+
+### Option 1: Using Expo Go (Recommended for quick testing)
+1. Install Expo Go app on your Android/iOS device
+2. Clone this repository
+3. Run `npm install` then `npx expo start`
+4. Scan the QR code with Expo Go app
+
+### Option 2: APK Installation
+[Download APK from releases section]:## Testing the App
+
+### Option 1: Using Expo Go (Recommended for quick testing)
+1. Install Expo Go app on your Android/iOS device
+2. Clone this repository
+3. Run `npm install` then `npx expo start`
+4. Scan the QR code with Expo Go app
+
+### Option 2: APK Installation
+[Download APK from releases section]: https://github.com/Chirag4452/Health_Flex_TimerApp/releases
+
 ## 📋 Setup Instructions
 
 ### Prerequisites
