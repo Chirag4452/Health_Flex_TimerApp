@@ -188,16 +188,26 @@ const Timer = forwardRef(({ name, duration, category, onComplete, onViewHistory 
   // Expose methods for external control (bulk actions)
   useImperativeHandle(ref, () => ({
     start_timer: () => {
+      console.log(`⏰ Timer ${name}: start_timer called, remaining_time: ${remaining_time}, is_running: ${is_running}`);
       if (remaining_time > 0 && !is_running) {
+        console.log(`▶️ Timer ${name}: Starting timer`);
         set_is_running(true);
+      } else {
+        console.log(`⚠️ Timer ${name}: Cannot start - remaining_time: ${remaining_time}, is_running: ${is_running}`);
       }
     },
     pause_timer: () => {
+      console.log(`⏰ Timer ${name}: pause_timer called, is_running: ${is_running}`);
       if (is_running) {
+        console.log(`⏸️ Timer ${name}: Pausing timer`);
         set_is_running(false);
+      } else {
+        console.log(`⚠️ Timer ${name}: Cannot pause - not running`);
       }
     },
     reset_timer: () => {
+      console.log(`⏰ Timer ${name}: reset_timer called`);
+      console.log(`🔄 Timer ${name}: Resetting timer`);
       set_is_running(false);
       set_remaining_time(duration);
       set_show_completion_modal(false);
@@ -207,7 +217,7 @@ const Timer = forwardRef(({ name, duration, category, onComplete, onViewHistory 
       remaining_time,
       progress: calculate_progress()
     })
-  }), [is_running, remaining_time, duration]);
+  }), [is_running, remaining_time, duration, name]);
 
   // Prepare timer data for the completion modal
   const timer_data = {

@@ -27,6 +27,15 @@ export default function HomeScreen({ navigation, route }) {
 
   // Refs to access timer components for bulk actions
   const timer_refs = useRef({});
+  
+  // Function to create or get a ref for a timer
+  const get_timer_ref = (timer_id) => {
+    if (!timer_refs.current[timer_id]) {
+      timer_refs.current[timer_id] = React.createRef();
+      console.log(`🔄 Created new ref for timer: ${timer_id}`);
+    }
+    return timer_refs.current[timer_id];
+  };
 
   /**
    * Gets default timers with categories
@@ -110,37 +119,60 @@ export default function HomeScreen({ navigation, route }) {
    * @param {Array} timers - Array of timers to act on
    */
   const execute_bulk_action = (action, timers) => {
+    console.log(`🚀 Starting bulk action: ${action} on ${timers.length} timers`);
+    console.log(`📋 Timer IDs: ${timers.map(t => t.id).join(', ')}`);
+    console.log(`🔗 Available refs: ${Object.keys(timer_refs.current).join(', ')}`);
+    
     let action_count = 0;
     
     timers.forEach(timer => {
+      console.log(`⏰ Processing timer: ${timer.id} (${timer.name})`);
+      
       const timer_ref = timer_refs.current[timer.id];
+      console.log(`🔍 Timer ref exists: ${!!timer_ref}, ref.current exists: ${!!(timer_ref && timer_ref.current)}`);
+      
       if (timer_ref && timer_ref.current) {
+        console.log(`📋 Available methods on ref:`, Object.keys(timer_ref.current));
+        
         try {
           switch (action) {
             case 'start':
               if (timer_ref.current.start_timer) {
+                console.log(`▶️ Calling start_timer on ${timer.id}`);
                 timer_ref.current.start_timer();
                 action_count++;
+              } else {
+                console.warn(`❌ start_timer method not found on ${timer.id}`);
               }
               break;
             case 'pause':
               if (timer_ref.current.pause_timer) {
+                console.log(`⏸️ Calling pause_timer on ${timer.id}`);
                 timer_ref.current.pause_timer();
                 action_count++;
+              } else {
+                console.warn(`❌ pause_timer method not found on ${timer.id}`);
               }
               break;
             case 'reset':
               if (timer_ref.current.reset_timer) {
+                console.log(`🔄 Calling reset_timer on ${timer.id}`);
                 timer_ref.current.reset_timer();
                 action_count++;
+              } else {
+                console.warn(`❌ reset_timer method not found on ${timer.id}`);
               }
               break;
           }
         } catch (error) {
-          console.warn(`Failed to ${action} timer ${timer.id}:`, error);
+          console.error(`💥 Failed to ${action} timer ${timer.id}:`, error);
         }
+      } else {
+        console.warn(`❌ No ref or ref.current found for timer ${timer.id}${timer_ref ? ', ref exists but no .current' : ', no ref at all'}`);
       }
     });
+
+    console.log(`✅ Bulk action complete: ${action_count} out of ${timers.length} timers affected`);
 
     // Show feedback message
     if (action_count > 0) {
@@ -148,6 +180,13 @@ export default function HomeScreen({ navigation, route }) {
       Alert.alert(
         'Bulk Action Complete',
         `${action_count} timer${action_count !== 1 ? 's' : ''} ${action_past_tense}.`,
+        [{ text: 'OK' }]
+      );
+    } else {
+      console.warn(`⚠️ No timers were affected by bulk ${action} action`);
+      Alert.alert(
+        'Bulk Action Failed',
+        `No timers could be ${action}ed. Please check that timers are loaded properly.`,
         [{ text: 'OK' }]
       );
     }
@@ -185,9 +224,7 @@ export default function HomeScreen({ navigation, route }) {
    */
   const handle_delete_timer = (timer_id) => {
     // Clean up ref
-    if (timer_refs.current[timer_id]) {
-      delete timer_refs.current[timer_id];
-    }
+    cleanup_timer_ref(timer_id);
 
     // Remove timer from state
     set_timers_list(prev_timers => {
@@ -204,12 +241,14 @@ export default function HomeScreen({ navigation, route }) {
   };
 
   /**
-   * Sets up timer ref for bulk actions
+   * Cleanup timer ref when component unmounts
    * @param {string} timer_id - ID of the timer
-   * @param {Object} ref - React ref object
    */
-  const set_timer_ref = (timer_id, ref) => {
-    timer_refs.current[timer_id] = ref;
+  const cleanup_timer_ref = (timer_id) => {
+    if (timer_refs.current[timer_id]) {
+      console.log(`🗑️ Cleaning up ref for ${timer_id}`);
+      delete timer_refs.current[timer_id];
+    }
   };
 
   /**
@@ -421,6 +460,8 @@ export default function HomeScreen({ navigation, route }) {
    * Renders each timer item
    */
   const render_timer_item = ({ item, section }) => {
+    const timer_ref = get_timer_ref(item.id);
+    
     if (section.is_custom) {
       return (
         <View style={styles.timer_item_container}>
@@ -429,7 +470,7 @@ export default function HomeScreen({ navigation, route }) {
             onComplete={handle_timer_complete}
             onDelete={handle_delete_timer}
             onViewHistory={handle_view_history}
-            ref={ref => set_timer_ref(item.id, ref)}
+            ref={timer_ref}
           />
         </View>
       );
@@ -442,7 +483,7 @@ export default function HomeScreen({ navigation, route }) {
             category={item.category}
             onComplete={() => handle_timer_complete(item.name)}
             onViewHistory={handle_view_history}
-            ref={ref => set_timer_ref(item.id, ref)}
+            ref={timer_ref}
           />
         </View>
       );
@@ -456,6 +497,8 @@ export default function HomeScreen({ navigation, route }) {
     <View style={styles.header}>
       <Text style={styles.screen_title}>My Timers</Text>
       
+
+
       {/* Add Timer Button */}
       <TouchableOpacity
         style={styles.add_button}
@@ -545,6 +588,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 20,
+  },
+  debug_button: {
+    backgroundColor: '#6f42c1',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 15,
+    marginBottom: 10,
+  },
+  debug_button_text: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   add_button: {
     backgroundColor: '#007AFF',

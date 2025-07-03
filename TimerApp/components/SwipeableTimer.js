@@ -25,18 +25,27 @@ const SwipeableTimer = forwardRef(({ timer, onComplete, onDelete, onViewHistory 
   // Forward timer control methods to the Timer component
   useImperativeHandle(ref, () => ({
     start_timer: () => {
+      console.log(`🔄 SwipeableTimer: start_timer called for ${timer.name}, inner ref exists: ${!!timer_component_ref.current}`);
       if (timer_component_ref.current) {
         timer_component_ref.current.start_timer();
+      } else {
+        console.warn(`❌ SwipeableTimer: No timer_component_ref for ${timer.name}`);
       }
     },
     pause_timer: () => {
+      console.log(`🔄 SwipeableTimer: pause_timer called for ${timer.name}, inner ref exists: ${!!timer_component_ref.current}`);
       if (timer_component_ref.current) {
         timer_component_ref.current.pause_timer();
+      } else {
+        console.warn(`❌ SwipeableTimer: No timer_component_ref for ${timer.name}`);
       }
     },
     reset_timer: () => {
+      console.log(`🔄 SwipeableTimer: reset_timer called for ${timer.name}, inner ref exists: ${!!timer_component_ref.current}`);
       if (timer_component_ref.current) {
         timer_component_ref.current.reset_timer();
+      } else {
+        console.warn(`❌ SwipeableTimer: No timer_component_ref for ${timer.name}`);
       }
     },
     get_timer_state: () => {
@@ -45,7 +54,7 @@ const SwipeableTimer = forwardRef(({ timer, onComplete, onDelete, onViewHistory 
       }
       return null;
     }
-  }), []);
+  }), [timer.name]);
 
   /**
    * Handles the delete action with confirmation
@@ -139,10 +148,12 @@ const SwipeableTimer = forwardRef(({ timer, onComplete, onDelete, onViewHistory 
   if (timer.is_default) {
     return (
       <Timer
+        ref={timer_component_ref}
         name={timer.name}
         duration={timer.duration}
         category={timer.category}
         onComplete={() => onComplete(timer.name)}
+        onViewHistory={onViewHistory}
       />
     );
   }
