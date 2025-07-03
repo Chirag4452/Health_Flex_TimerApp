@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Image } from 'react-native';
 
 // Import screens
 import HomeScreen from './screens/HomeScreen';
@@ -28,9 +28,16 @@ function AppContent() {
         {/* Left spacer for balanced layout */}
         <View style={styles.header_left} />
         
-        {/* Centered title */}
+        {/* Centered title with logo */}
         <View style={styles.header_center}>
-          <Text style={[styles.app_title, { color: theme.text_primary }]}>Health Flex</Text>
+          <View style={styles.title_container}>
+            <Image 
+              source={require('./assets/health_flex_logo.jpeg')} 
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={[styles.app_title, { color: theme.text_primary }]}>Health Flex</Text>
+          </View>
         </View>
         
         {/* Right section with theme toggle */}
@@ -118,6 +125,17 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'flex-end',
     justifyContent: 'center',
+  },
+  title_container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logo: {
+    width: 32,
+    height: 32,
+    marginRight: 10,
+    borderRadius: 16,
   },
   app_title: {
     fontSize: 25,
