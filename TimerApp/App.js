@@ -113,16 +113,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   header_left: {
-    flex: 2,
+    flex: 0.75,
     // Left spacer for balanced layout
   },
   header_center: {
-    flex: 1,
+    flex: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
   header_right: {
-    flex: 1,
+    flex: 0.75,
     alignItems: 'flex-end',
     justifyContent: 'center',
   },
