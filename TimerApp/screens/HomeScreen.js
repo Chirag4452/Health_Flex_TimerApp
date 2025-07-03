@@ -173,6 +173,13 @@ export default function HomeScreen({ navigation, route }) {
   };
 
   /**
+   * Handles navigation to History screen
+   */
+  const handle_view_history = () => {
+    navigation.navigate('History');
+  };
+
+  /**
    * Handles deleting a custom timer
    * @param {string} timer_id - ID of the timer to delete
    */
@@ -421,6 +428,7 @@ export default function HomeScreen({ navigation, route }) {
             timer={item}
             onComplete={handle_timer_complete}
             onDelete={handle_delete_timer}
+            onViewHistory={handle_view_history}
             ref={ref => set_timer_ref(item.id, ref)}
           />
         </View>
@@ -433,6 +441,7 @@ export default function HomeScreen({ navigation, route }) {
             duration={item.duration}
             category={item.category}
             onComplete={() => handle_timer_complete(item.name)}
+            onViewHistory={handle_view_history}
             ref={ref => set_timer_ref(item.id, ref)}
           />
         </View>

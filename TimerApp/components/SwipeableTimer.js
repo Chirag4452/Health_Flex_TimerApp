@@ -12,9 +12,10 @@ const SWIPE_THRESHOLD = screenWidth * 0.3; // 30% of screen width
  * @param {Object} props.timer - Timer object with id, name, duration, category, is_default
  * @param {Function} props.onComplete - Callback when timer completes
  * @param {Function} props.onDelete - Callback when timer is deleted
+ * @param {Function} props.onViewHistory - Callback when View History is pressed
  * @param {Object} ref - React ref for external control
  */
-const SwipeableTimer = forwardRef(({ timer, onComplete, onDelete }, ref) => {
+const SwipeableTimer = forwardRef(({ timer, onComplete, onDelete, onViewHistory }, ref) => {
   const translateX = useRef(new Animated.Value(0)).current;
   const lastOffset = useRef(0);
 
@@ -172,6 +173,7 @@ const SwipeableTimer = forwardRef(({ timer, onComplete, onDelete }, ref) => {
           duration={timer.duration}
           category={timer.category}
           onComplete={() => onComplete(timer.name)}
+          onViewHistory={onViewHistory}
         />
       </Animated.View>
     </View>
