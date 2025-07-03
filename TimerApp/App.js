@@ -7,13 +7,14 @@ import { StyleSheet, View, Text } from 'react-native';
 // Import screens
 import HomeScreen from './screens/HomeScreen';
 import HistoryScreen from './screens/HistoryScreen';
+import AddTimerScreen from './screens/AddTimerScreen';
 
 // Create bottom tab navigator
 const Tab = createBottomTabNavigator();
 
 /**
  * Main App component with React Navigation bottom tabs
- * Features Home and History screens with a Timer App title
+ * Features Home, Add Timer, and History screens with a Timer App title
  */
 export default function App() {
   return (
@@ -34,6 +35,13 @@ export default function App() {
           component={HomeScreen}
           options={{
             tabBarLabel: 'Home',
+          }}
+        />
+        <Tab.Screen
+          name="AddTimer"
+          component={AddTimerScreen}
+          options={{
+            tabBarLabel: 'Add Timer',
           }}
         />
         <Tab.Screen
