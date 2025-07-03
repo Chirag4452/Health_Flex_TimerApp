@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, forwardRef, useImperativeHandle } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, PanResponder, Dimensions, Alert } from 'react-native';
 import Timer from './Timer';
 
@@ -6,12 +6,45 @@ const { width: screenWidth } = Dimensions.get('window');
 const SWIPE_THRESHOLD = screenWidth * 0.3; // 30% of screen width
 
 /**
- * SwipeableTimer component - Wraps Timer with swipe-to-delete functionality
- * Only shows delete action for custom timers (non-default)
+ * SwipeableTimer component - Timer with swipe-to-delete functionality
+ * Only allows deletion of custom timers (not default ones)
+ * @param {Object} props - Component props
+ * @param {Object} props.timer - Timer object with id, name, duration, category, is_default
+ * @param {Function} props.onComplete - Callback when timer completes
+ * @param {Function} props.onDelete - Callback when timer is deleted
+ * @param {Object} ref - React ref for external control
  */
-export default function SwipeableTimer({ timer, onComplete, onDelete }) {
+const SwipeableTimer = forwardRef(({ timer, onComplete, onDelete }, ref) => {
   const translateX = useRef(new Animated.Value(0)).current;
   const lastOffset = useRef(0);
+
+  // Reference to the Timer component for forwarding methods
+  const timer_component_ref = useRef(null);
+
+  // Forward timer control methods to the Timer component
+  useImperativeHandle(ref, () => ({
+    start_timer: () => {
+      if (timer_component_ref.current) {
+        timer_component_ref.current.start_timer();
+      }
+    },
+    pause_timer: () => {
+      if (timer_component_ref.current) {
+        timer_component_ref.current.pause_timer();
+      }
+    },
+    reset_timer: () => {
+      if (timer_component_ref.current) {
+        timer_component_ref.current.reset_timer();
+      }
+    },
+    get_timer_state: () => {
+      if (timer_component_ref.current) {
+        return timer_component_ref.current.get_timer_state();
+      }
+      return null;
+    }
+  }), []);
 
   /**
    * Handles the delete action with confirmation
@@ -134,6 +167,7 @@ export default function SwipeableTimer({ timer, onComplete, onDelete }) {
         {...panResponder.panHandlers}
       >
         <Timer
+          ref={timer_component_ref}
           name={timer.name}
           duration={timer.duration}
           category={timer.category}
@@ -142,7 +176,9 @@ export default function SwipeableTimer({ timer, onComplete, onDelete }) {
       </Animated.View>
     </View>
   );
-}
+});
+
+export default SwipeableTimer;
 
 const styles = StyleSheet.create({
   container: {

@@ -1,18 +1,53 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import ProgressBar from './ProgressBar';
 
 /**
- * Timer component with countdown functionality
+ * Timer component with countdown functionality and progress visualization
  * Props:
  * - name: string - Display name for the timer
  * - duration: number - Timer duration in seconds
  * - category: string - Timer category (optional)
  * - onComplete: function - Callback when timer reaches zero
+ * - ref: React ref for external control
  */
-export default function Timer({ name, duration, category, onComplete }) {
+const Timer = forwardRef(({ name, duration, category, onComplete }, ref) => {
   // State management for timer functionality
   const [remaining_time, set_remaining_time] = useState(duration);
   const [is_running, set_is_running] = useState(false);
+
+  /**
+   * Calculates progress as a value between 0 and 1
+   * @returns {number} - Progress value (0 = not started, 1 = completed)
+   */
+  const calculate_progress = () => {
+    if (duration === 0) return 1;
+    const elapsed_time = duration - remaining_time;
+    return Math.max(0, Math.min(1, elapsed_time / duration));
+  };
+
+  /**
+   * Gets the progress bar color based on timer state
+   * @returns {string} - Color code for the progress bar
+   */
+  const get_progress_color = () => {
+    if (remaining_time === 0) {
+      return '#6c757d'; // Gray for completed
+    } else if (is_running) {
+      return '#28a745'; // Green for running
+    } else {
+      return '#ffc107'; // Yellow for paused
+    }
+  };
+
+  /**
+   * Gets progress percentage as a formatted string
+   * @returns {string} - Percentage string (e.g., "45%")
+   */
+  const get_progress_percentage = () => {
+    const progress = calculate_progress();
+    return `${Math.round(progress * 100)}%`;
+  };
 
   /**
    * Formats time from seconds to MM:SS format
@@ -79,6 +114,29 @@ export default function Timer({ name, duration, category, onComplete }) {
     }
   }, [remaining_time, is_running]);
 
+  // Expose methods for external control (bulk actions)
+  useImperativeHandle(ref, () => ({
+    start_timer: () => {
+      if (remaining_time > 0 && !is_running) {
+        set_is_running(true);
+      }
+    },
+    pause_timer: () => {
+      if (is_running) {
+        set_is_running(false);
+      }
+    },
+    reset_timer: () => {
+      set_is_running(false);
+      set_remaining_time(duration);
+    },
+    get_timer_state: () => ({
+      is_running,
+      remaining_time,
+      progress: Math.max(0, Math.min(1, (duration - remaining_time) / duration))
+    })
+  }), [is_running, remaining_time, duration]);
+
   return (
     <View style={styles.container}>
       {/* Timer name and category display */}
@@ -91,10 +149,30 @@ export default function Timer({ name, duration, category, onComplete }) {
         )}
       </View>
       
+      {/* Progress Bar and Percentage */}
+      <View style={styles.progress_container}>
+        <ProgressBar
+          progress={calculate_progress()}
+          color={get_progress_color()}
+          height={10}
+        />
+        <Text style={[styles.progress_text, { color: get_progress_color() }]}>
+          {get_progress_percentage()}
+        </Text>
+      </View>
+
       {/* Remaining time display in MM:SS format */}
       <Text style={styles.time_display}>
         {format_time(remaining_time)}
       </Text>
+      
+      {/* Timer State Indicator */}
+      <View style={styles.state_container}>
+        <View style={[styles.state_indicator, { backgroundColor: get_progress_color() }]} />
+        <Text style={styles.state_text}>
+          {remaining_time === 0 ? 'Completed' : is_running ? 'Running' : 'Paused'}
+        </Text>
+      </View>
       
       {/* Control buttons */}
       <View style={styles.button_container}>
@@ -122,7 +200,7 @@ export default function Timer({ name, duration, category, onComplete }) {
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -142,7 +220,7 @@ const styles = StyleSheet.create({
   },
   header_container: {
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 15,
   },
   timer_name: {
     fontSize: 18,
@@ -162,12 +240,38 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
+  progress_container: {
+    width: '100%',
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+  progress_text: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 8,
+  },
   time_display: {
     fontSize: 36,
     fontWeight: 'bold',
     color: '#007AFF',
-    marginBottom: 20,
+    marginBottom: 10,
     fontFamily: 'monospace',
+  },
+  state_container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  state_indicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  state_text: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
   },
   button_container: {
     flexDirection: 'row',
@@ -194,4 +298,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-}); 
+});
+
+export default Timer; 

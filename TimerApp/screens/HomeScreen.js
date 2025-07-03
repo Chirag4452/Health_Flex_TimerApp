@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, SectionList, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Timer from '../components/Timer';
@@ -24,6 +24,9 @@ export default function HomeScreen({ navigation, route }) {
   const [expanded_sections, set_expanded_sections] = useState({
     'default_timers': true, // Default timers section always starts expanded
   });
+
+  // Refs to access timer components for bulk actions
+  const timer_refs = useRef({});
 
   /**
    * Gets default timers with categories
@@ -67,6 +70,90 @@ export default function HomeScreen({ navigation, route }) {
   };
 
   /**
+   * Performs bulk action on all timers in a section
+   * @param {string} action - Action to perform: 'start', 'pause', 'reset'
+   * @param {Array} timers - Array of timers in the section
+   * @param {string} section_title - Title of the section for confirmation messages
+   */
+  const handle_bulk_action = (action, timers, section_title) => {
+    if (timers.length === 0) {
+      Alert.alert('No Timers', `There are no timers in the ${section_title} category.`);
+      return;
+    }
+
+    // Handle reset with confirmation
+    if (action === 'reset') {
+      Alert.alert(
+        'Reset All Timers',
+        `Are you sure you want to reset all timers in "${section_title}"?`,
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Reset All',
+            style: 'destructive',
+            onPress: () => execute_bulk_action('reset', timers),
+          },
+        ]
+      );
+      return;
+    }
+
+    execute_bulk_action(action, timers);
+  };
+
+  /**
+   * Executes the bulk action on timers
+   * @param {string} action - Action to perform
+   * @param {Array} timers - Array of timers to act on
+   */
+  const execute_bulk_action = (action, timers) => {
+    let action_count = 0;
+    
+    timers.forEach(timer => {
+      const timer_ref = timer_refs.current[timer.id];
+      if (timer_ref && timer_ref.current) {
+        try {
+          switch (action) {
+            case 'start':
+              if (timer_ref.current.start_timer) {
+                timer_ref.current.start_timer();
+                action_count++;
+              }
+              break;
+            case 'pause':
+              if (timer_ref.current.pause_timer) {
+                timer_ref.current.pause_timer();
+                action_count++;
+              }
+              break;
+            case 'reset':
+              if (timer_ref.current.reset_timer) {
+                timer_ref.current.reset_timer();
+                action_count++;
+              }
+              break;
+          }
+        } catch (error) {
+          console.warn(`Failed to ${action} timer ${timer.id}:`, error);
+        }
+      }
+    });
+
+    // Show feedback message
+    if (action_count > 0) {
+      const action_past_tense = action === 'start' ? 'started' : action === 'pause' ? 'paused' : 'reset';
+      Alert.alert(
+        'Bulk Action Complete',
+        `${action_count} timer${action_count !== 1 ? 's' : ''} ${action_past_tense}.`,
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  /**
    * Callback function when a timer completes
    * @param {string} timer_name - Name of the completed timer
    */
@@ -90,6 +177,11 @@ export default function HomeScreen({ navigation, route }) {
    * @param {string} timer_id - ID of the timer to delete
    */
   const handle_delete_timer = (timer_id) => {
+    // Clean up ref
+    if (timer_refs.current[timer_id]) {
+      delete timer_refs.current[timer_id];
+    }
+
     // Remove timer from state
     set_timers_list(prev_timers => {
       const updated_timers = prev_timers.filter(timer => timer.id !== timer_id);
@@ -102,6 +194,15 @@ export default function HomeScreen({ navigation, route }) {
       'Timer has been successfully deleted.',
       [{ text: 'OK' }]
     );
+  };
+
+  /**
+   * Sets up timer ref for bulk actions
+   * @param {string} timer_id - ID of the timer
+   * @param {Object} ref - React ref object
+   */
+  const set_timer_ref = (timer_id, ref) => {
+    timer_refs.current[timer_id] = ref;
   };
 
   /**
@@ -243,33 +344,69 @@ export default function HomeScreen({ navigation, route }) {
   };
 
   /**
-   * Renders the section header with expand/collapse functionality
+   * Renders the bulk action buttons for a section
+   */
+  const render_bulk_actions = (section) => {
+    return (
+      <View style={styles.bulk_actions_container}>
+        <TouchableOpacity
+          style={[styles.bulk_action_button, styles.start_all_button]}
+          onPress={() => handle_bulk_action('start', section.all_data, section.title)}
+        >
+          <Text style={styles.bulk_action_text}>Start All</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.bulk_action_button, styles.pause_all_button]}
+          onPress={() => handle_bulk_action('pause', section.all_data, section.title)}
+        >
+          <Text style={styles.bulk_action_text}>Pause All</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.bulk_action_button, styles.reset_all_button]}
+          onPress={() => handle_bulk_action('reset', section.all_data, section.title)}
+        >
+          <Text style={styles.bulk_action_text}>Reset All</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  /**
+   * Renders the section header with expand/collapse functionality and bulk actions
    */
   const render_section_header = ({ section }) => {
     const is_expanded = expanded_sections[section.id];
     const timer_count = section.all_data.length;
     
     return (
-      <TouchableOpacity
-        style={styles.section_header}
-        onPress={() => toggle_section(section.id)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.section_header_content}>
-          <View style={styles.section_title_container}>
-            <Text style={styles.section_title}>{section.title}</Text>
-            <Text style={styles.timer_count}>({timer_count})</Text>
+      <View style={styles.section_header}>
+        <TouchableOpacity
+          style={styles.section_header_main}
+          onPress={() => toggle_section(section.id)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.section_header_content}>
+            <View style={styles.section_title_container}>
+              <Text style={styles.section_title}>{section.title}</Text>
+              <Text style={styles.timer_count}>({timer_count})</Text>
+            </View>
+            <View style={styles.expand_indicator}>
+              <Text style={styles.expand_icon}>
+                {is_expanded ? '▼' : '▶'}
+              </Text>
+            </View>
           </View>
-          <View style={styles.expand_indicator}>
-            <Text style={styles.expand_icon}>
-              {is_expanded ? '▼' : '▶'}
-            </Text>
-          </View>
-        </View>
+        </TouchableOpacity>
+
+        {/* Bulk Actions - only show when section is expanded and has timers */}
+        {is_expanded && timer_count > 0 && render_bulk_actions(section)}
+        
         {section.is_custom && is_expanded && (
           <Text style={styles.swipe_hint}>💡 Swipe left to delete</Text>
         )}
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -284,6 +421,7 @@ export default function HomeScreen({ navigation, route }) {
             timer={item}
             onComplete={handle_timer_complete}
             onDelete={handle_delete_timer}
+            ref={ref => set_timer_ref(item.id, ref)}
           />
         </View>
       );
@@ -295,6 +433,7 @@ export default function HomeScreen({ navigation, route }) {
             duration={item.duration}
             category={item.category}
             onComplete={() => handle_timer_complete(item.name)}
+            ref={ref => set_timer_ref(item.id, ref)}
           />
         </View>
       );
@@ -429,11 +568,13 @@ const styles = StyleSheet.create({
   },
   section_header: {
     backgroundColor: '#f8f9fa',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
     marginBottom: 5,
+  },
+  section_header_main: {
+    paddingVertical: 15,
+    paddingHorizontal: 20,
   },
   section_header_content: {
     flexDirection: 'row',
@@ -463,11 +604,39 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: 'bold',
   },
+  bulk_actions_container: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+    gap: 10,
+  },
+  bulk_action_button: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  start_all_button: {
+    backgroundColor: '#28a745',
+  },
+  pause_all_button: {
+    backgroundColor: '#ffc107',
+  },
+  reset_all_button: {
+    backgroundColor: '#dc3545',
+  },
+  bulk_action_text: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   swipe_hint: {
     fontSize: 12,
     color: '#666',
     fontStyle: 'italic',
-    marginTop: 8,
+    paddingHorizontal: 20,
+    paddingBottom: 10,
   },
   timer_item_container: {
     paddingHorizontal: 10,
