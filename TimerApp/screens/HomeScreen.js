@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, SectionList, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Timer from '../components/Timer';
 import SwipeableTimer from '../components/SwipeableTimer';
@@ -19,6 +19,11 @@ export default function HomeScreen({ navigation, route }) {
   
   // State to track if we're currently saving (optional, for debugging)
   const [is_saving, set_is_saving] = useState(false);
+
+  // State to track which sections are expanded (by section id)
+  const [expanded_sections, set_expanded_sections] = useState({
+    'default_timers': true, // Default timers section always starts expanded
+  });
 
   /**
    * Gets default timers with categories
@@ -48,6 +53,17 @@ export default function HomeScreen({ navigation, route }) {
         is_default: true,
       },
     ];
+  };
+
+  /**
+   * Toggles the expanded state of a section
+   * @param {string} section_id - ID of the section to toggle
+   */
+  const toggle_section = (section_id) => {
+    set_expanded_sections(prev => ({
+      ...prev,
+      [section_id]: !prev[section_id]
+    }));
   };
 
   /**
@@ -167,25 +183,162 @@ export default function HomeScreen({ navigation, route }) {
           return prev_timers;
         });
 
+        // Automatically expand the new timer's category section
+        if (new_timer.category) {
+          const section_id = `custom_${new_timer.category.toLowerCase().replace(/\s+/g, '_')}`;
+          set_expanded_sections(prev => ({
+            ...prev,
+            [section_id]: true
+          }));
+        }
+
         // Clear the navigation params to prevent re-adding on subsequent visits
         navigation.setParams({ new_timer: undefined });
       }
     }, [route.params?.new_timer, navigation])
   );
 
-  // Separate timers into custom and default
-  const custom_timers = timers_list.filter(timer => !timer.is_default);
-  const default_timers = timers_list.filter(timer => timer.is_default);
+  // Prepare data for SectionList
+  const prepare_section_data = () => {
+    const custom_timers = timers_list.filter(timer => !timer.is_default);
+    const default_timers = timers_list.filter(timer => timer.is_default);
+    
+    const sections = [];
 
-  // Group custom timers by category
-  const grouped_custom_timers = custom_timers.reduce((groups, timer) => {
-    const category = timer.category || 'Uncategorized';
-    if (!groups[category]) {
-      groups[category] = [];
+    // Add custom timer sections grouped by category
+    if (custom_timers.length > 0) {
+      const grouped_custom = custom_timers.reduce((groups, timer) => {
+        const category = timer.category || 'Uncategorized';
+        if (!groups[category]) {
+          groups[category] = [];
+        }
+        groups[category].push(timer);
+        return groups;
+      }, {});
+
+      Object.entries(grouped_custom).forEach(([category, timers]) => {
+        const section_id = `custom_${category.toLowerCase().replace(/\s+/g, '_')}`;
+        sections.push({
+          id: section_id,
+          title: category,
+          is_custom: true,
+          data: expanded_sections[section_id] ? timers : [],
+          all_data: timers, // Keep reference to all data for counting
+        });
+      });
     }
-    groups[category].push(timer);
-    return groups;
-  }, {});
+
+    // Add default timers section
+    if (default_timers.length > 0) {
+      sections.push({
+        id: 'default_timers',
+        title: 'Default Timers',
+        is_custom: false,
+        data: expanded_sections['default_timers'] ? default_timers : [],
+        all_data: default_timers,
+      });
+    }
+
+    return sections;
+  };
+
+  /**
+   * Renders the section header with expand/collapse functionality
+   */
+  const render_section_header = ({ section }) => {
+    const is_expanded = expanded_sections[section.id];
+    const timer_count = section.all_data.length;
+    
+    return (
+      <TouchableOpacity
+        style={styles.section_header}
+        onPress={() => toggle_section(section.id)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.section_header_content}>
+          <View style={styles.section_title_container}>
+            <Text style={styles.section_title}>{section.title}</Text>
+            <Text style={styles.timer_count}>({timer_count})</Text>
+          </View>
+          <View style={styles.expand_indicator}>
+            <Text style={styles.expand_icon}>
+              {is_expanded ? '▼' : '▶'}
+            </Text>
+          </View>
+        </View>
+        {section.is_custom && is_expanded && (
+          <Text style={styles.swipe_hint}>💡 Swipe left to delete</Text>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  /**
+   * Renders each timer item
+   */
+  const render_timer_item = ({ item, section }) => {
+    if (section.is_custom) {
+      return (
+        <View style={styles.timer_item_container}>
+          <SwipeableTimer
+            timer={item}
+            onComplete={handle_timer_complete}
+            onDelete={handle_delete_timer}
+          />
+        </View>
+      );
+    } else {
+      return (
+        <View style={styles.timer_item_container}>
+          <Timer
+            name={item.name}
+            duration={item.duration}
+            category={item.category}
+            onComplete={() => handle_timer_complete(item.name)}
+          />
+        </View>
+      );
+    }
+  };
+
+  /**
+   * Renders the header component
+   */
+  const render_header = () => (
+    <View style={styles.header}>
+      <Text style={styles.screen_title}>My Timers</Text>
+      
+      {/* Add Timer Button */}
+      <TouchableOpacity
+        style={styles.add_button}
+        onPress={handle_add_timer}
+      >
+        <Text style={styles.add_button_text}>+ Add Timer</Text>
+      </TouchableOpacity>
+
+      {/* Optional: Show saving indicator */}
+      {is_saving && (
+        <View style={styles.saving_indicator}>
+          <ActivityIndicator size="small" color="#007AFF" />
+          <Text style={styles.saving_text}>Saving...</Text>
+        </View>
+      )}
+    </View>
+  );
+
+  /**
+   * Renders empty state when no timers
+   */
+  const render_empty_state = () => (
+    <View style={styles.empty_state_container}>
+      <Text style={styles.empty_state_text}>
+        Tap "Add Timer" to create your custom timers with categories
+      </Text>
+      <Text style={styles.empty_state_subtext}>
+        Once you have custom timers, you can swipe left to delete them
+      </Text>
+    </View>
+  );
 
   // Show loading indicator while loading timers
   if (is_loading) {
@@ -197,75 +350,22 @@ export default function HomeScreen({ navigation, route }) {
     );
   }
 
+  const section_data = prepare_section_data();
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.screen_title}>My Timers</Text>
-        
-        {/* Add Timer Button */}
-        <TouchableOpacity
-          style={styles.add_button}
-          onPress={handle_add_timer}
-        >
-          <Text style={styles.add_button_text}>+ Add Timer</Text>
-        </TouchableOpacity>
-
-        {/* Optional: Show saving indicator */}
-        {is_saving && (
-          <View style={styles.saving_indicator}>
-            <ActivityIndicator size="small" color="#007AFF" />
-            <Text style={styles.saving_text}>Saving...</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Custom Timers by Category */}
-      {Object.keys(grouped_custom_timers).length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.section_title}>Custom Timers</Text>
-          <Text style={styles.swipe_hint}>💡 Swipe left on custom timers to delete</Text>
-          {Object.entries(grouped_custom_timers).map(([category, timers]) => (
-            <View key={category} style={styles.category_group}>
-              <Text style={styles.category_title}>{category}</Text>
-              {timers.map((timer) => (
-                <SwipeableTimer
-                  key={timer.id}
-                  timer={timer}
-                  onComplete={handle_timer_complete}
-                  onDelete={handle_delete_timer}
-                />
-              ))}
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Default Test Timers Section */}
-      <View style={styles.section}>
-        <Text style={styles.section_title}>Default Timers</Text>
-        {default_timers.map((timer) => (
-          <Timer
-            key={timer.id}
-            name={timer.name}
-            duration={timer.duration}
-            category={timer.category}
-            onComplete={() => handle_timer_complete(timer.name)}
-          />
-        ))}
-      </View>
-
-      {/* Instructions if no custom timers */}
-      {custom_timers.length === 0 && (
-        <View style={styles.instructions_container}>
-          <Text style={styles.instructions_text}>
-            Tap "Add Timer" to create your custom timers with categories
-          </Text>
-          <Text style={styles.swipe_instructions}>
-            Once you have custom timers, you can swipe left to delete them
-          </Text>
-        </View>
-      )}
-    </ScrollView>
+    <View style={styles.container}>
+      <SectionList
+        sections={section_data}
+        keyExtractor={(item) => item.id}
+        renderItem={render_timer_item}
+        renderSectionHeader={render_section_header}
+        ListHeaderComponent={render_header}
+        ListEmptyComponent={render_empty_state}
+        contentContainerStyle={section_data.length === 0 ? styles.empty_content : null}
+        showsVerticalScrollIndicator={false}
+        stickySectionHeadersEnabled={false}
+      />
+    </View>
   );
 }
 
@@ -290,7 +390,7 @@ const styles = StyleSheet.create({
     paddingVertical: 30,
     paddingHorizontal: 20,
     backgroundColor: '#f8f9fa',
-    marginBottom: 10,
+    marginBottom: 20,
   },
   screen_title: {
     fontSize: 28,
@@ -327,48 +427,70 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  section: {
-    marginBottom: 25,
+  section_header: {
+    backgroundColor: '#f8f9fa',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+    marginBottom: 5,
+  },
+  section_header_content: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  section_title_container: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   section_title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    marginLeft: 20,
-    marginBottom: 15,
-    marginTop: 10,
+  },
+  timer_count: {
+    fontSize: 16,
+    color: '#666',
+    marginLeft: 8,
+    fontWeight: '500',
+  },
+  expand_indicator: {
+    padding: 5,
+  },
+  expand_icon: {
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: 'bold',
   },
   swipe_hint: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
     fontStyle: 'italic',
-    marginLeft: 20,
-    marginBottom: 10,
+    marginTop: 8,
   },
-  category_group: {
-    marginBottom: 20,
+  timer_item_container: {
+    paddingHorizontal: 10,
+    paddingVertical: 2,
   },
-  category_title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
-    marginLeft: 20,
-    marginBottom: 10,
-    marginTop: 5,
+  empty_content: {
+    flexGrow: 1,
   },
-  instructions_container: {
+  empty_state_container: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 30,
-    paddingHorizontal: 20,
+    paddingHorizontal: 40,
+    paddingVertical: 60,
   },
-  instructions_text: {
+  empty_state_text: {
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
     fontStyle: 'italic',
     marginBottom: 10,
   },
-  swipe_instructions: {
+  empty_state_subtext: {
     fontSize: 14,
     color: '#999',
     textAlign: 'center',
