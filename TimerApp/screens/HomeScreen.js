@@ -4,7 +4,7 @@ import Timer from '../components/Timer';
 
 /**
  * HomeScreen component - displays the main home screen of the Timer App
- * Shows sample timers to demonstrate Timer component functionality
+ * Shows test timers with different durations to demonstrate Timer component functionality
  */
 export default function HomeScreen() {
   /**
@@ -22,33 +22,26 @@ export default function HomeScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.screen_title}>Home Screen</Text>
-        <Text style={styles.subtitle}>Timer App Demo</Text>
+        <Text style={styles.screen_title}>My Timers</Text>
       </View>
 
-      {/* Sample timers to demonstrate functionality */}
+      {/* Test timers with different durations */}
       <Timer
-        name="Pomodoro Timer"
-        duration={25 * 60} // 25 minutes
-        onComplete={() => handle_timer_complete('Pomodoro Timer')}
+        name="1 Minute Timer"
+        duration={60} // 60 seconds
+        onComplete={() => handle_timer_complete('1 Minute Timer')}
       />
 
       <Timer
-        name="Short Break"
-        duration={5 * 60} // 5 minutes
-        onComplete={() => handle_timer_complete('Short Break')}
+        name="2 Minute Timer"
+        duration={120} // 120 seconds
+        onComplete={() => handle_timer_complete('2 Minute Timer')}
       />
 
       <Timer
-        name="Long Break"
-        duration={15 * 60} // 15 minutes
-        onComplete={() => handle_timer_complete('Long Break')}
-      />
-
-      <Timer
-        name="Quick Test"
-        duration={10} // 10 seconds for testing
-        onComplete={() => handle_timer_complete('Quick Test')}
+        name="5 Minute Timer"
+        duration={300} // 300 seconds
+        onComplete={() => handle_timer_complete('5 Minute Timer')}
       />
     </ScrollView>
   );
@@ -61,17 +54,14 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 10,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    backgroundColor: '#f8f9fa',
+    marginBottom: 10,
   },
   screen_title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#333',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 5,
   },
 }); 
